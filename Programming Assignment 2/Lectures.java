@@ -1,14 +1,84 @@
 import java.io.*;
-import java.math.*;
 import java.util.*;
 
-class Lectures {
-    private static int calculateMinimumHalls(int N, int[] start, int[] end) {
-    	return 0;
+public class Lectures {
+    private class LectureNode implements Comparable<LectureNode>{
+        int start, end;
+
+        public LectureNode(int start, int end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        public boolean conflicts(LectureNode other) {
+            if (other.end <= start || other.start >= end) {
+                return false;
+            }
+            return true;
+        }
+        @Override
+        public int compareTo(LectureNode other) {
+            if (other.start != start) {
+                return Integer.compare(start, other.start);
+            } else {
+                return Integer.compare(end, other.end);
+            }
+        }
     }
 
-    private static int calculateMinimumCancels(int N, int L, int[] start, int[] end) {
-       return 0;
+    private ArrayList<LectureNode> lectures;
+    private int minHalls;
+    private ArrayList<LinkedList<LectureNode>> lectureHalls;
+
+    public Lectures() {
+        lectures = new ArrayList<>();
+        minHalls = 0;
+        lectureHalls = new ArrayList<>();
+    }
+
+    private int calculateMinimumHalls(int N, int[] start, int[] end) {
+    	for (int i = 0; i < N; i++) {
+    	    lectureHalls.add(new LinkedList<>());
+    	    lectures.add(new LectureNode(start[i], end[i]));
+        }
+        Collections.sort(lectures);
+    	for (LectureNode l: lectures) {
+    	    for (LinkedList<LectureNode> lh: lectureHalls) {
+    	        if (lh.isEmpty()) {
+    	            lh.add(l);
+    	            minHalls++;
+    	            break;
+                }
+                boolean flag = false;
+                for (LectureNode o: lh) {
+                    if (l.conflicts(o)) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if (!flag) {
+                    lh.add(l);
+                    break;
+                }
+            }
+        }
+        return minHalls;
+    }
+
+    private int calculateMinimumCancels(int N, int L, int[] start, int[] end) {
+       int[] sizesOfLectureHalls = new int[minHalls];
+       for (int i = 0; i < minHalls; i++) {
+           sizesOfLectureHalls[i] = lectureHalls.get(i).size();
+       }
+       Arrays.sort(sizesOfLectureHalls);
+       if (L >= minHalls) {
+           return 0;
+       }
+       int minCancels = 0;
+       for (int i = 0; i < minHalls - L; i++) {
+           minCancels += sizesOfLectureHalls[i];
+       }
+       return minCancels;
     }
 
     public static void main(String[] args) throws IOException {
@@ -25,9 +95,10 @@ class Lectures {
             for (int i = 0; i < N; i++) {
                 end[i] = sc.nextInt();
             }
-            int minHalls = calculateMinimumHalls(N, Arrays.copyOf(start, start.length), Arrays.copyOf(end, end.length));
+            Lectures lectures = new Lectures();
+            int minHalls = lectures.calculateMinimumHalls(N, Arrays.copyOf(start, start.length), Arrays.copyOf(end, end.length));
             System.out.println(minHalls);
-            int minCancels = calculateMinimumCancels(N, L, start, end);
+            int minCancels = lectures.calculateMinimumCancels(N, L, start, end);
             System.out.println(minCancels);
         }
     }
